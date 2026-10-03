@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SpeedGauge — Internet Speed Test</title>
+<meta name="description" content="Test your Internet download speed, upload speed, ping and jitter quickly with SpeedGauge.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#060a13" id="metaTheme">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="application-name" content="SpeedGauge">
+
+<!-- Open Graph / social -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SpeedGauge">
+<meta property="og:title" content="SpeedGauge — Internet Speed Test">
+<meta property="og:description" content="Test your Internet download speed, upload speed, ping and jitter quickly with SpeedGauge.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SpeedGauge — Internet Speed Test">
+<meta name="twitter:description" content="Test your Internet download speed, upload speed, ping and jitter quickly with SpeedGauge.">
+
+<!-- PWA-ready: when you host this site, add manifest.json + service-worker.js and
+     enable the next line. (Left disabled so the single file opens cleanly from disk.)
+<link rel="manifest" href="manifest.json">
+-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23060a13'/%3E%3Cpath d='M12 44a22 22 0 1 1 40 0' fill='none' stroke='%2322d3ee' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M32 40l12-16' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='40' r='4' fill='%23fff'/%3E%3C/svg%3E">
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"SpeedGauge","alternateName":"SpeedGauge Internet Speed Test","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (modern web browser)","description":"Browser-based Internet speed test that measures download speed, upload speed, ping and jitter.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+
+<style>
+/* =====================================================================
+   SPEEDGAUGE — DESIGN TOKENS
+   ===================================================================== */
+:root{
+  --bg:#060a13; --bg2:#0b1220; --card:#0f1726; --card2:#131d31; --line:#1d2b46;
+  --text:#e9f0ff; --muted:#8da0c4; --faint:#5f7396;
+  --cyan:#22d3ee; --blue:#3b82f6; --purple:#8b5cf6;
+  --green:#34d399; --yellow:#fbbf24; --red:#f87171;
+  --glow:rgba(34,211,238,.38); --shadow:0 10px 30px rgba(0,0,0,.4);
+  --radius:16px; --ease:cubic-bezier(.2,.7,.2,1);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+[data-theme="light"]{
+  --bg:#f1f5fb; --bg2:#e7eef9; --card:#ffffff; --card2:#f3f6fc; --line:#d5dfef;
+  --text:#0c1a33; --muted:#51658a; --faint:#7d8fb0;
+  --cyan:#0891b2; --blue:#2563eb; --purple:#7c3aed;
+  --green:#059669; --yellow:#b45309; --red:#dc2626;
+  --glow:rgba(8,145,178,.22); --shadow:0 10px 26px rgba(20,40,80,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;font-family:var(--font);color:var(--text);background:var(--bg);
+  background-image:radial-gradient(900px 420px at 50% -120px,rgba(34,211,238,.10),transparent 70%);
+  background-repeat:no-repeat;line-height:1.5;overflow-x:hidden;min-height:100vh;
+}
+[hidden]{display:none!important}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:-999px;top:8px;background:var(--cyan);color:#001018;padding:8px 14px;border-radius:8px;z-index:50}
+.skip:focus{left:8px}
+
+.app{max-width:860px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom));
+  padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+
+/* =====================================================================
+   HEADER
+   ===================================================================== */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:calc(10px + env(safe-area-inset-top)) 0 10px;min-height:60px}
+.brand{display:flex;align-items:center;gap:8px;background:none;border:0;padding:6px 4px;
+  font-size:19px;font-weight:700;letter-spacing:.2px;border-radius:10px}
+.brand b{color:var(--cyan);font-weight:800}
+.brand svg{width:30px;height:30px;flex:none}
+.actions{display:flex;gap:4px}
+.hbtn{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;background:transparent;
+  border:1px solid transparent;border-radius:12px;color:var(--muted);font-size:13.5px;font-weight:600}
+.hbtn:hover,.hbtn[aria-pressed="true"]{color:var(--text);background:var(--card);border-color:var(--line)}
+.hbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:370px){.hbtn span{display:none}.hbtn{padding:0 12px}}
+
+/* =====================================================================
+   VIEWS
+   ===================================================================== */
+.view{padding-top:6px}
+.view.enter{animation:vIn .28s var(--ease) both}
+@keyframes vIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.title-block{text-align:center;padding:6px 0 4px}
+.title-block h1,.title-block h2.pg{font-size:clamp(24px,6.4vw,34px);font-weight:800;letter-spacing:-.4px;line-height:1.15}
+.title-block p{color:var(--muted);font-size:14.5px;margin-top:6px}
+.eyebrow{font-size:12.5px;letter-spacing:2.2px;font-weight:700;color:var(--cyan);text-align:center;margin:8px 0}
+[data-focus]:focus{outline:none}
+
+/* =====================================================================
+   GAUGE
+   ===================================================================== */
+.gauge{position:relative;width:min(100%,370px);margin:6px auto 0;aspect-ratio:320/240}
+.gauge svg{width:100%;height:100%;display:block;overflow:visible}
+.g-track{fill:none;stroke:var(--line);stroke-width:10;stroke-linecap:round}
+.g-arc{fill:none;stroke-width:10;stroke-linecap:round;filter:drop-shadow(0 0 6px var(--glow))}
+.g-tick{stroke:var(--faint);stroke-width:1.2;stroke-linecap:round}
+.g-tick.major{stroke:var(--muted);stroke-width:2}
+.g-label{fill:var(--muted);font-size:11px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--font);font-variant-numeric:tabular-nums}
+.g-needle{fill:var(--cyan);filter:drop-shadow(0 0 4px var(--glow))}
+.g-hub{fill:var(--card);stroke:var(--cyan);stroke-width:2.5}
+.g-hub2{fill:var(--cyan)}
+.readout{position:absolute;left:0;right:0;top:70%;text-align:center;pointer-events:none}
+.num{font-size:clamp(36px,11.5vw,52px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.unit{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1.5px;margin-top:3px}
+.reduced-glow .g-arc,.reduced-glow .g-needle{filter:none}
+
+/* =====================================================================
+   GO BUTTON
+   ===================================================================== */
+.go-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin:4px 0 6px}
+.go{position:relative;width:118px;height:118px;border-radius:50%;border:0;color:#021018;font-size:34px;font-weight:900;letter-spacing:2px;
+  background:radial-gradient(circle at 35% 30%,#7cecff,var(--cyan) 45%,#0a8fb0 100%);
+  box-shadow:0 0 0 6px rgba(34,211,238,.14),0 0 0 1px rgba(34,211,238,.6),0 12px 34px var(--glow);
+  transition:transform .15s var(--ease),box-shadow .2s}
+.go:hover{transform:scale(1.04)}
+.go:active{transform:scale(.97)}
+.go::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:2px solid var(--cyan);opacity:0;animation:pulse 2.6s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.92);opacity:.55}100%{transform:scale(1.18);opacity:0}}
+.go-msg{min-height:22px;font-size:14px;text-align:center;color:var(--muted);padding:0 8px}
+.go-msg.err{color:var(--red);font-weight:600}
+
+/* =====================================================================
+   METRIC CARDS
+   ===================================================================== */
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+@media (min-width:640px){.metrics{grid-template-columns:repeat(4,1fr)}}
+.metrics.three{grid-template-columns:repeat(3,1fr)}
+.metric,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.metric{padding:12px 12px 11px;transition:border-color .2s,box-shadow .2s;min-width:0}
+.metric.active{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 6px 22px var(--glow)}
+.m-label{font-size:11.5px;font-weight:700;letter-spacing:1.3px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.m-label i{font-style:normal;color:var(--cyan);font-size:13px}
+.m-val{margin-top:4px;display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
+.m-val .v{font-size:clamp(20px,5.6vw,26px);font-weight:800;font-variant-numeric:tabular-nums}
+.m-val .v.small{font-size:15px;font-weight:700;color:var(--yellow)}
+.m-val .u{font-size:12px;color:var(--muted);font-weight:600}
+
+/* =====================================================================
+   USE-CASE ICONS
+   ===================================================================== */
+.uses{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 12px}
+.use{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;
+  background:var(--card);border:1px solid var(--line);font-size:12px;color:var(--muted);font-weight:600;text-align:center}
+.use svg{width:26px;height:26px;fill:none;stroke:var(--cyan);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* =====================================================================
+   INFO CARDS
+   ===================================================================== */
+.cards{display:grid;grid-template-columns:1fr;gap:10px;margin:8px 0}
+@media (min-width:560px){.cards{grid-template-columns:1fr 1fr}}
+.card{padding:14px 15px}
+.c-label{font-size:11.5px;font-weight:700;letter-spacing:1.4px;color:var(--muted)}
+.c-val{font-size:19px;font-weight:700;margin-top:3px;word-break:break-word}
+.c-sub{font-size:13px;color:var(--muted);margin-top:3px;word-break:break-word}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.8px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card2)}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}
+.pill.off::before{background:var(--red)}
+.pill.off{color:var(--red)}
+.link-btn{background:none;border:0;color:var(--cyan);font-weight:700;font-size:13.5px;padding:8px 0 0;min-height:36px;text-align:left}
+.link-btn:hover{text-decoration:underline}
+.note{font-size:12.5px;color:var(--faint);text-align:center;margin:10px auto 0;max-width:520px}
+
+/* =====================================================================
+   TEST VIEW
+   ===================================================================== */
+.phase{font-size:15px;font-weight:800;letter-spacing:2.4px;text-align:center;color:var(--cyan);margin-top:6px}
+.bar{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:10px 4px 0}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--purple));border-radius:999px;transition:width .25s linear}
+.via{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:10px 4px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border-radius:14px;
+  font-weight:800;letter-spacing:.8px;border:1px solid transparent;font-size:15px;
+  background:linear-gradient(135deg,var(--cyan),var(--blue));color:#01121c;transition:transform .12s,filter .15s}
+.btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--line)}
+.btn.ghost:hover{background:var(--card)}
+.btn.danger{background:transparent;color:var(--red);border-color:var(--red)}
+.btn.small{min-height:40px;padding:0 14px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+.btn-row .btn{flex:1 1 160px;max-width:260px}
+
+/* =====================================================================
+   RESULT VIEW
+   ===================================================================== */
+.hero{text-align:center;padding:18px 12px;background:linear-gradient(180deg,var(--card),var(--card2))}
+.hero .r-big{font-size:clamp(54px,17vw,84px);font-weight:900;letter-spacing:-2px;line-height:1.05;font-variant-numeric:tabular-nums;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .r-big small{font-size:.26em;letter-spacing:1px;color:var(--muted);-webkit-text-fill-color:var(--muted);margin-left:6px;font-weight:700}
+.hero .r-sub{color:var(--muted);font-size:13px;margin-top:2px}
+.interp{font-size:14.5px;margin:10px 2px;color:var(--text)}
+.fine{font-size:12.5px;color:var(--faint);margin:6px 2px}
+.rating{margin:14px 0 4px;text-align:center}
+.rating h3{font-size:12.5px;letter-spacing:1.1px;color:var(--muted);font-weight:700;margin-bottom:8px}
+.rate-row{display:flex;gap:8px;justify-content:center}
+.rate{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:16px}
+.rate[aria-pressed="true"]{background:var(--cyan);color:#01121c;border-color:var(--cyan)}
+.rate-lbl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);max-width:330px;margin:6px auto 0}
+
+/* =====================================================================
+   HISTORY + ERROR
+   ===================================================================== */
+.h-list{list-style:none;margin:10px 0;padding:0;display:grid;gap:10px}
+.h-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.h-date{font-size:12.5px;color:var(--muted);font-weight:600}
+.h-vals{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:5px;font-weight:700;font-variant-numeric:tabular-nums}
+.h-meta{font-size:12px;color:var(--faint);margin-top:4px}
+.empty{text-align:center;color:var(--muted);padding:26px 10px}
+.err-box{border:1px solid var(--red);background:var(--card);border-radius:var(--radius);padding:20px 18px;margin-top:14px}
+.err-box h2{color:var(--red);letter-spacing:1.6px;font-size:18px}
+.err-box ul{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:14px}
+.err-box .detail{font-size:12px;color:var(--faint);margin-top:10px;word-break:break-word}
+
+/* =====================================================================
+   CONTENT / SEO
+   ===================================================================== */
+body:not([data-view="home"]) #info{display:none}
+.info{margin-top:30px;border-top:1px solid var(--line);padding-top:6px}
+.info h2{font-size:clamp(20px,5vw,25px);margin:22px 0 6px;letter-spacing:-.2px}
+.info h3{font-size:16px;margin:16px 0 3px;color:var(--cyan)}
+.info p{color:var(--muted);font-size:14.5px;max-width:70ch}
+.info ul{color:var(--muted);font-size:14.5px;padding-left:20px;margin:6px 0}
+.info li{margin:3px 0}
+.foot{margin:28px 0 4px;text-align:center;font-size:12.5px;color:var(--faint)}
+
+/* =====================================================================
+   DIALOGS / TOAST / SWITCH
+   ===================================================================== */
+dialog{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:0;width:min(92vw,440px);box-shadow:var(--shadow);max-height:88vh}
+dialog::backdrop{background:rgba(2,6,14,.66)}
+.dlg{padding:16px 18px 18px}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dlg-head h2{font-size:19px}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:transparent;font-size:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line)}
+.row span b{display:block;font-size:15px}
+.row small{color:var(--muted);font-size:12.5px}
+.switch{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:999px;background:var(--line);position:relative;flex:none;cursor:pointer;transition:background .2s;border:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+.switch:checked{background:var(--cyan)}
+.switch:checked::after{transform:translateX(20px)}
+.srv{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.srv input{margin-top:4px;accent-color:var(--cyan);width:18px;height:18px}
+.srv b{display:block}.srv small{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;
+  background:var(--card2);border:1px solid var(--cyan);color:var(--text);padding:10px 16px;border-radius:12px;font-size:14px;
+  z-index:60;pointer-events:none;transition:.25s var(--ease);max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* =====================================================================
+   REDUCED MOTION
+   ===================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .go::after{display:none}
+  .g-arc,.g-needle{filter:none}
+}
+.no-anim *,.no-anim *::before,.no-anim *::after{animation:none!important;transition:none!important}
+</style>
+</head>
+
+<body data-view="home">
+<noscript><p style="padding:20px;text-align:center">SpeedGauge needs JavaScript to run a real speed test.</p></noscript>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="app">
+
+<!-- ============================ HEADER ============================ -->
+<header class="top">
+  <button class="brand" id="brandBtn" type="button" aria-label="SpeedGauge — go to start screen">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M10 46a24 24 0 1 1 44 0" fill="none" stroke="var(--cyan)" stroke-width="6" stroke-linecap="round"/>
+      <path d="M32 42l13-17" stroke="var(--text)" stroke-width="4.5" stroke-linecap="round"/>
+      <circle cx="32" cy="42" r="5" fill="var(--text)"/>
+      <path d="M20 56v-4M32 56v-7M44 56v-10" stroke="var(--purple)" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <span>Speed<b>Gauge</b></span>
+  </button>
+  <nav class="actions" aria-label="Primary">
+    <button class="hbtn" id="btnShare" type="button" aria-label="Share latest result">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg><span>Share</span>
+    </button>
+    <button class="hbtn" id="btnResults" type="button" aria-label="Results history" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6M3 20h18"/></svg><span>Results</span>
+    </button>
+    <button class="hbtn" id="btnSettings" type="button" aria-label="Settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg><span>Settings</span>
+    </button>
+  </nav>
+</header>
+
+<main id="main">
+<p class="sr-only" id="srStatus" role="status" aria-live="polite"></p>
+
+<!-- ============================ PAGE 1: HOME ============================ -->
+<section id="view-home" class="view" aria-labelledby="homeTitle">
+  <div class="title-block">
+    <h1 id="homeTitle" data-focus tabindex="-1">Internet Speed Test</h1>
+    <p>Check your real download, upload, ping and jitter.</p>
+  </div>
+
+  <div id="slotHome">
+    <!-- The gauge element lives here on the home screen and is moved to #slotTest during a test. -->
+    <div class="gauge" id="gauge" role="img" aria-label="Speedometer showing current measured speed in megabits per second">
+      <svg viewBox="0 0 320 240" aria-hidden="true">
+        <defs>
+          <linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="var(--cyan)"/><stop offset=".6" stop-color="var(--blue)"/><stop offset="1" stop-color="var(--purple)"/>
+          </linearGradient>
+        </defs>
+        <path id="gTrack" class="g-track" pathLength="100"/>
+        <path id="gArc" class="g-arc" pathLength="100" stroke="url(#gg)"/>
+        <g id="gTicks"></g>
+        <g id="gLabels"></g>
+        <g id="gNeedle">
+          <polygon class="g-needle" points="157.4,128 160,30 162.6,128"/>
+          <circle class="g-hub" cx="160" cy="122" r="10"/>
+          <circle class="g-hub2" cx="160" cy="122" r="3.4"/>
+        </g>
+      </svg>
+      <div class="readout"><div class="num" id="gNum">0.0</div><div class="unit">Mbps</div></div>
+    </div>
+  </div>
+
+  <div class="go-wrap">
+    <button class="go" id="btnGo" type="button" aria-label="Go — start the speed test">GO</button>
+    <p class="go-msg" id="goMsg" role="status">Press GO to begin the test.</p>
+  </div>
+
+  <div class="metrics" data-metrics></div>
+
+  <div class="uses" aria-label="What your connection is used for">
+    <div class="use"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M6.5 6.5h.01M9.5 6.5h.01"/></svg>Browsing</div>
+    <div class="use"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9h12a3 3 0 0 1 3 3v3a3 3 0 0 1-5.2 2L14.5 15h-5l-1.3 2A3 3 0 0 1 3 15v-3a3 3 0 0 1 3-3z"/><path d="M8 11v3M6.5 12.5h3M16 12h.01M18 13.5h.01"/></svg>Gaming</div>
+    <div class="use"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 8.7l5 3.3-5 3.3zM8 21h8"/></svg>Streaming</div>
+    <div class="use"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="M15 10.5l6-3.5v10l-6-3.5z"/></svg>Video Calls</div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="c-label">CONNECTION</div>
+      <div class="c-val" data-conn>Unknown</div>
+      <div class="c-sub">Multi-stream test · <span data-streams></span></div>
+      <div class="c-sub" data-conn-detail></div>
+      <div class="c-sub">Provider unavailable</div>
+      <div style="margin-top:8px"><span class="pill" data-online>ONLINE</span></div>
+    </div>
+    <div class="card">
+      <div class="c-label">TEST SERVER</div>
+      <div class="c-val" data-server-name>Automatic Edge</div>
+      <div class="c-sub" data-server-sub>Cloudflare Edge</div>
+      <button class="link-btn" id="btnChangeServer" type="button">CHANGE SERVER</button>
+    </div>
+  </div>
+
+  <p class="note">For a cleaner result, pause other heavy downloads, uploads, video streaming and VPN traffic while testing.</p>
+</section>
+
+<!-- ============================ PAGE 2: LIVE TEST ============================ -->
+<section id="view-test" class="view" aria-labelledby="testTitle" hidden>
+  <div class="title-block">
+    <h2 class="pg" id="testTitle" data-focus tabindex="-1">Testing your connection</h2>
+    <p>Real data is being transferred. Please keep this tab open.</p>
+  </div>
+  <div id="slotTest"></div>
+  <div class="phase" id="phaseLabel">READY</div>
+  <div class="bar" role="progressbar" aria-label="Test progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barWrap"><i id="barFill"></i></div>
+  <div class="via"><span>Testing via <b data-server-full>Cloudflare Edge</b></span><span>Data tested <b id="dataTested">0.0 MB</b></span></div>
+  <div class="metrics" data-metrics></div>
+  <div class="btn-row"><button class="btn ghost" id="btnCancel" type="button">CANCEL TEST</button></div>
+</section>
+
+<!-- ============================ PAGE 3: RESULT ============================ -->
+<section id="view-result" class="view" aria-labelledby="resTitle" hidden>
+  <h2 class="eyebrow" id="resTitle" data-focus tabindex="-1">YOUR RESULT</h2>
+  <div class="card hero">
+    <div class="c-label">DOWNLOAD</div>
+    <div class="r-big"><span id="rDl">—</span><small>Mbps</small></div>
+    <div class="r-sub">Measured speed · real data transfer</div>
+  </div>
+  <div class="metrics three">
+    <div class="metric"><div class="m-label"><i>↑</i>UPLOAD</div><div class="m-val"><span class="v" id="rUl">—</span><span class="u" id="rUlU">Mbps</span></div></div>
+    <div class="metric"><div class="m-label"><i>◉</i>PING</div><div class="m-val"><span class="v" id="rPing">—</span><span class="u">ms</span></div></div>
+    <div class="metric"><div class="m-label"><i>≈</i>JITTER</div><div class="m-val"><span class="v" id="rJit">—</span><span class="u">ms</span></div></div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="c-label">CONNECTION</div><div class="c-val" id="rConn">—</div><div class="c-sub" id="rConnSub"></div></div>
+    <div class="card"><div class="c-label">TEST SERVER</div><div class="c-val" id="rServer">—</div></div>
+    <div class="card"><div class="c-label">DATA TESTED</div><div class="c-val" id="rData">—</div></div>
+    <div class="card"><div class="c-label">TEST COMPLETED</div><div class="c-val" id="rTime" style="font-size:16px">—</div></div>
+  </div>
+  <p class="interp" id="rInterp"></p>
+  <p class="fine">This is the observed throughput between your device/browser and the selected test edge at the time of testing. It is not your ISP’s advertised plan speed or guaranteed maximum.</p>
+
+  <div class="rating">
+    <h3 id="rateLbl">HOW DOES YOUR NETWORK AVAILABILITY COMPARE WITH YOUR EXPECTATIONS? (OPTIONAL)</h3>
+    <div class="rate-row" role="group" aria-labelledby="rateLbl">
+      <button class="rate" type="button" data-rate="1" aria-pressed="false" aria-label="1 — much worse">1</button>
+      <button class="rate" type="button" data-rate="2" aria-pressed="false" aria-label="2">2</button>
+      <button class="rate" type="button" data-rate="3" aria-pressed="false" aria-label="3 — as expected">3</button>
+      <button class="rate" type="button" data-rate="4" aria-pressed="false" aria-label="4">4</button>
+      <button class="rate" type="button" data-rate="5" aria-pressed="false" aria-label="5 — much better">5</button>
+    </div>
+    <div class="rate-lbl"><span>Much worse</span><span>As expected</span><span>Much better</span></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="btnAgain" type="button">GO AGAIN</button>
+    <button class="btn ghost" id="btnShareRes" type="button">SHARE RESULT</button>
+  </div>
+  <div class="btn-row" style="margin-top:0"><button class="btn ghost small" id="btnToHistory" type="button">VIEW ALL RESULTS</button></div>
+  <p class="fine" id="rId" style="text-align:center"></p>
+</section>
+
+<!-- ============================ HISTORY ============================ -->
+<section id="view-history" class="view" aria-labelledby="histTitle" hidden>
+  <div class="title-block">
+    <h2 class="pg" id="histTitle" data-focus tabindex="-1">Results</h2>
+    <p>Your recent tests. Stored only on this device.</p>
+  </div>
+  <ul class="h-list" id="historyList"></ul>
+  <p class="empty" id="historyEmpty">No tests yet. Press GO on the start screen to run your first test.</p>
+  <div class="btn-row">
+    <button class="btn" id="btnHistGo" type="button">GO</button>
+    <button class="btn danger" id="btnClearHistory" type="button">CLEAR HISTORY</button>
+  </div>
+</section>
+
+<!-- ============================ ERROR ============================ -->
+<section id="view-error" class="view" aria-labelledby="errTitle" hidden>
+  <div class="err-box" role="alert">
+    <h2 id="errTitle" data-focus tabindex="-1">TEST UNAVAILABLE</h2>
+    <p id="errMsg" style="margin-top:6px">We couldn’t complete the measurement.</p>
+    <ul id="errCauses"></ul>
+    <p class="detail" id="errDetail"></p>
+  </div>
+  <div class="btn-row">
+    <button class="btn" id="btnRetry" type="button">TRY AGAIN</button>
+    <button class="btn ghost" id="btnErrHome" type="button">BACK</button>
+  </div>
+</section>
+
+<!-- ============================ SEO / HELP CONTENT ============================ -->
+<section id="info" class="info" aria-label="About Internet speed tests">
+  <h2>What is an Internet speed test?</h2>
+  <p>An Internet speed test measures how quickly data moves between your device and a test server. SpeedGauge runs real transfers in your browser and reports download speed, upload speed, ping and jitter.</p>
+
+  <h3>What does download speed mean?</h3>
+  <p>Download speed is how fast data arrives on your device, in megabits per second (Mbps). It matters for streaming, web pages, app updates and file downloads.</p>
+
+  <h3>What does upload speed mean?</h3>
+  <p>Upload speed is how fast your device sends data out. It matters for video calls, cloud backups, sending large files and live streaming.</p>
+
+  <h3>What is ping?</h3>
+  <p>Ping (latency) is the time a small request takes to reach a server and return, in milliseconds. Lower ping feels more responsive in games and calls. SpeedGauge takes several samples and shows the median.</p>
+
+  <h3>What is jitter?</h3>
+  <p>Jitter describes how much your ping varies from one sample to the next. SpeedGauge shows the median deviation of its ping samples from their median — a practical stability indicator, not a carrier-grade measurement.</p>
+
+  <h2>Why can speed results change?</h2>
+  <p>Browser-based results can vary because of Wi-Fi conditions, mobile signal, device hardware, browser behaviour, distance to the test server, Internet congestion, routing, server capacity and background traffic. Your ISP plan speed and your measured throughput are not the same thing: a 500 Mbps plan may measure lower over Wi-Fi or a busy route.</p>
+
+  <h3>How to get a cleaner speed test</h3>
+  <ul>
+    <li>Pause other downloads, uploads and video streaming.</li>
+    <li>Turn off VPN or proxy tools while testing.</li>
+    <li>Move closer to your router, or use a cable if possible.</li>
+    <li>Keep this tab open and in the foreground until the test finishes.</li>
+    <li>Run the test a few times and compare results.</li>
+  </ul>
+
+  <h2>Wi-Fi and mobile Internet speed testing</h2>
+  <p>The same test works on Wi-Fi, Ethernet and mobile data. On mobile data, note the “Data tested” figure on the result screen — a test transfers real data, so it counts toward your plan.</p>
+
+  <h2>About SpeedGauge</h2>
+  <p>SpeedGauge is a browser-based Internet performance testing tool designed to provide a quick view of download speed, upload speed, ping and jitter. Results may vary depending on your device, Wi-Fi/mobile signal, server distance, congestion, routing and browser limitations. It does not claim laboratory accuracy and reports observed throughput between your browser and the selected test server.</p>
+
+  <h2>Privacy</h2>
+  <p>SpeedGauge does not need your personal information to perform a browser-based speed test. It asks for no camera, microphone or location access, contains no advertising scripts, and keeps your history only in this browser’s local storage.</p>
+
+  <p class="foot">SpeedGauge · Internet Speed Test · No ads</p>
+</section>
+
+</main>
+</div>
+
+<!-- ============================ SETTINGS DIALOG ============================ -->
+<dialog id="dlgSettings" aria-labelledby="setTitle">
+  <form method="dialog" class="dlg">
+    <div class="dlg-head"><h2 id="setTitle">Settings</h2><button class="icon-btn" value="close" aria-label="Close settings">✕</button></div>
+    <label class="row"><span><b>Light theme</b><small>Default is dark</small></span><input type="checkbox" class="switch" id="setLight"></label>
+    <label class="row"><span><b>Auto-start test</b><small>Start automatically when the page opens</small></span><input type="checkbox" class="switch" id="setAuto"></label>
+    <label class="row"><span><b>Sound</b><small>Soft chime when a test completes</small></span><input type="checkbox" class="switch" id="setSound"></label>
+    <label class="row"><span><b>Animation</b><small>Smooth needle &amp; transitions</small></span><input type="checkbox" class="switch" id="setAnim"></label>
+    <div class="row"><span><b>Test history</b><small>Stored only on this device</small></span><button type="button" class="btn danger small" id="setClear">Clear</button></div>
+    <p class="fine" id="setData"></p>
+  </form>
+</dialog>
+
+<!-- ============================ SERVER DIALOG ============================ -->
+<dialog id="dlgServer" aria-labelledby="srvTitle">
+  <form method="dialog" class="dlg">
+    <div class="dlg-head"><h2 id="srvTitle">Test server</h2><button class="icon-btn" value="close" aria-label="Close server list">✕</button></div>
+    <div id="srvList"></div>
+    <p class="fine">Only configured, reachable servers are listed. Dedicated SpeedGauge servers can be added later in the server registry.</p>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   SPEEDGAUGE — ENGINE
+   Structure:
+     1. CONFIG & SERVER REGISTRY   (replace endpoints here)
+     2. STATE & HELPERS
+     3. MEASUREMENT ENGINE         (real network I/O only, no UI)
+     4. ANIMATION ENGINE           (gauge smoothing, display only)
+     5. UI / VIEWS / SETTINGS / HISTORY / SHARE
+     6. TEST ORCHESTRATION
+   Rule: nothing displayed as a measurement ever comes from Math.random().
+   Random/time nonces are used ONLY for cache-busting request URLs.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. CONFIG  — all tunables live here
+   --------------------------------------------------------------------- */
+const SPEED_TEST_CONFIG = {
+  /* Current prototype backend: Cloudflare public speed-test edge */
+  pingEndpoint:     'https://www.cloudflare.com/cdn-cgi/trace',
+  pingFallbackEndpoints: ['https://speed.cloudflare.com/__down?bytes=0'],
+  downloadEndpoint: 'https://speed.cloudflare.com/__down',   // GET  ?bytes=N
+  uploadEndpoint:   'https://speed.cloudflare.com/__up',     // POST body
+
+  pingSamples: 7,              // measured samples (one extra warm-up request is discarded)
+  pingTimeoutMs: 4000,
+
+  downloadStreams: 3,          // parallel download streams
+  downloadChunkBytes: 25000000,// bytes requested per request, per stream
+  downloadMaxBytes: 200000000, // hard cap on total download data (mobile-data protection)
+  downloadDurationMs: 8000,    // maximum download phase time
+
+  uploadStreams: 2,            // parallel upload streams
+  uploadChunkBytes: 4000000,   // bytes per upload request
+  uploadMaxBytes: 50000000,    // hard cap on total upload data
+  uploadDurationMs: 7000,      // maximum upload phase time
+
+  warmupMs: 1000,              // ramp-up window excluded from the final average
+  timeoutMs: 10000,            // stall timeout (no bytes at all / request timeout)
+  sampleIntervalMs: 100,       // live sampling interval
+  historyLimit: 10
+};
+
+/* Server registry — only list servers that REALLY exist and are reachable.
+   Future: add dedicated SpeedGauge nodes here (India, Singapore, Europe, ...). Each needs
+   /ping, /download, /upload. With >1 entry, "Automatic" picks the lowest measured latency. */
+const SERVER_REGISTRY = [
+  {
+    id: 'cloudflare-edge',
+    name: 'Cloudflare Edge',
+    region: 'Automatic (nearest edge)',
+    pingEndpoint: SPEED_TEST_CONFIG.pingEndpoint,
+    pingFallbackEndpoints: SPEED_TEST_CONFIG.pingFallbackEndpoints,
+    downloadEndpoint: SPEED_TEST_CONFIG.downloadEndpoint,
+    uploadEndpoint: SPEED_TEST_CONFIG.uploadEndpoint
+  }
+];
+
+const STORE_HISTORY = 'speedgauge.history.v1';
+const STORE_SETTINGS = 'speedgauge.settings.v1';
+const STORE_SERVER = 'speedgauge.server.v1';
+
+/* ---------------------------------------------------------------------
+   2. STATE & HELPERS
+   --------------------------------------------------------------------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const mkErr = (code, message) => { const e = new Error(message || code); e.code = code; return e; };
+const mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function safeStr(v, max = 60) { return String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').slice(0, max); }
+function fmtSpeed(v) { if (!isFinite(v)) return '—'; return v >= 1000 ? v.toFixed(0) : v.toFixed(1); }
+function fmtMB(bytes) { return (bytes / 1e6).toFixed(1) + ' MB'; }
+function fmtDate(ts) { return new Date(ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+function fmtTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+function withNonce(url, extra) {   // cache-busting ONLY
+  const sep = url.includes('?') ? '&' : '?';
+  return url + sep + (extra ? extra + '&' : '') + 'r=' + Date.now().toString(36) + (++nonceCounter);
+}
+let nonceCounter = 0;
+
+const PHASE_LABEL = {
+  ready: 'READY', checking: 'CHECKING CONNECTION', ping: 'PING TEST', download: 'DOWNLOAD TEST',
+  upload: 'UPLOAD TEST', calculating: 'CALCULATING', stabilizing: 'STABILIZING RESULT', complete: 'COMPLETE'
+};
+const PHASE_METRIC = { ping: ['ping', 'jitter'], download: ['dl'], upload: ['ul'] };
+
+const state = {
+  phase: 'ready', view: 'home', prevView: 'home',
+  running: false, runId: 0, offlineHit: false, abort: null, progress: 0,
+  m: { dl: null, ul: null, ping: null, jitter: null, ulUnavailable: false, bytesDown: 0, bytesUp: 0 },
+  server: null, colo: null, lastResult: null
+};
+
+let settings = loadSettings();
+let selectedServerId = 'auto';
+try { const s = localStorage.getItem(STORE_SERVER); if (s) selectedServerId = s; } catch (_) {}
+
+/* ---------------------------------------------------------------------
+   3. MEASUREMENT ENGINE
+   --------------------------------------------------------------------- */
+function median(arr) {
+  if (!arr.length) return NaN;
+  const s = arr.slice().sort((a, b) => a - b), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function calculatePing(samples) { return median(samples); }
+function calculateJitter(samples, med) {
+  const m = med == null ? median(samples) : med;
+  return median(samples.map(s => Math.abs(s - m)));
+}
+
+/* Browser-safe timeout helper. No AbortSignal is passed into fetch(). */
+function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+  const req = fetch(url, options);
+  const timer = new Promise((_, reject) => setTimeout(() => reject(mkErr('timeout', 'Request timed out')), timeoutMs));
+  return Promise.race([req, timer]);
+}
+
+function waitFor(ms, parent) {
+  return new Promise((resolve, reject) => {
+    if (parent && parent.aborted) return reject(mkErr('cancel', 'cancelled'));
+    const t = setTimeout(resolve, ms);
+    if (parent) {
+      const onAbort = () => { clearTimeout(t); reject(mkErr('cancel', 'cancelled')); };
+      parent.addEventListener('abort', onAbort, { once: true });
+    }
+  });
+}
+
+/* One latency sample. First try a readable CORS request; if CORS blocks it,
+   use a simple no-cors request for round-trip timing only. The response body
+   is never required for the latency measurement. */
+async function pingRequest(url, parent, timeoutMs) {
+  const full = withNonce(url);
+  let lastErr = null;
+  if (parent && parent.aborted) throw mkErr('cancel', 'cancelled');
+
+  const t0 = performance.now();
+  try {
+    const res = await fetchWithTimeout(full, {
+      mode: 'cors', cache: 'no-store', credentials: 'omit'
+    }, timeoutMs);
+    if (!res.ok) throw mkErr('server', 'HTTP ' + res.status);
+    let text = '';
+    try { text = await res.text(); } catch (_) {}
+    if (parent && parent.aborted) throw mkErr('cancel', 'cancelled');
+    return { ms: performance.now() - t0, text, mode: 'cors' };
+  } catch (e) {
+    if (parent && parent.aborted) throw mkErr('cancel', 'cancelled');
+    lastErr = e;
+  }
+
+  if (parent && parent.aborted) throw mkErr('cancel', 'cancelled');
+  const t1 = performance.now();
+  try {
+    const res = await fetchWithTimeout(full, {
+      mode: 'no-cors', cache: 'no-store', credentials: 'omit'
+    }, timeoutMs);
+    if (parent && parent.aborted) throw mkErr('cancel', 'cancelled');
+    /* Opaque responses are intentionally accepted here: only elapsed time is measured. */
+    return { ms: performance.now() - t1, text: '', mode: 'no-cors', opaque: !!res && res.type === 'opaque' };
+  } catch (e) {
+    if (parent && parent.aborted) throw mkErr('cancel', 'cancelled');
+    if (lastErr && lastErr.code === 'timeout' && e && e.code === 'timeout') throw lastErr;
+    throw normalizeError(e || lastErr);
+  }
+}
+
+function parseColo(text) {
+  const m = /^colo=([A-Z0-9]{2,5})\s*$/m.exec(text || '');
+  return m ? m[1] : null;
+}
+
+async function runPingTest(server, signal, onSample) {
+  const cfg = SPEED_TEST_CONFIG;
+  const endpoints = [server.pingEndpoint].concat(server.pingFallbackEndpoints || []);
+  let endpoint = null, colo = null, lastErr = null;
+  // warm-up request (opens the connection; its time is discarded) — also picks a working endpoint
+  for (const u of endpoints) {
+    try { const r = await pingRequest(u, signal, cfg.pingTimeoutMs); endpoint = u; colo = parseColo(r.text); break; }
+    catch (e) { if (signal.aborted) throw e; lastErr = e; }
+  }
+  if (!endpoint) throw lastErr || mkErr('server', 'No ping endpoint reachable');
+
+  const samples = [];
+  let attempts = 0;
+  while (samples.length < cfg.pingSamples && attempts < cfg.pingSamples + 3) {
+    attempts++;
+    try {
+      const r = await pingRequest(endpoint, signal, cfg.pingTimeoutMs);
+      samples.push(r.ms);
+      if (!colo) colo = parseColo(r.text);
+      if (onSample) onSample(samples.slice());
+    } catch (e) { if (signal.aborted) throw e; }
+    await sleep(40);
+  }
+  if (samples.length < 3) throw mkErr('ping', 'Too few successful ping samples');
+  const ping = calculatePing(samples);
+  return { samples, ping, jitter: calculateJitter(samples, ping), colo };
+}
+
+/* Throughput helpers */
+function bytesAt(samples, t) {
+  for (let i = 1; i < samples.length; i++) {
+    if (samples[i].t >= t) {
+      const a = samples[i - 1], b = samples[i], span = b.t - a.t || 1;
+      return a.b + (b.b - a.b) * ((t - a.t) / span);
+    }
+  }
+  return samples[samples.length - 1].b;
+}
+function liveRate(samples) {          // rolling ~1s window, Mbps
+  const last = samples[samples.length - 1];
+  let s = samples[0];
+  for (let i = samples.length - 1; i >= 0; i--) { if (last.t - samples[i].t <= 1000) s = samples[i]; else break; }
+  const dt = (last.t - s.t) / 1000;
+  if (dt <= 0.05) return 0;
+  return ((last.b - s.b) * 8) / dt / 1e6;
+}
+function finalRate(samples, totalBytes, durMs, warmMs) {
+  // average over the whole transfer AFTER the ramp-up window (excludes TCP/TLS slow start)
+  const tw = Math.min(warmMs, durMs * 0.25);
+  const bw = bytesAt(samples, tw);
+  const dt = (durMs - tw) / 1000, db = totalBytes - bw;
+  if (dt > 0.25 && db > 0) return (db * 8) / dt / 1e6;
+  return durMs > 0 ? (totalBytes * 8) / (durMs / 1000) / 1e6 : 0;
+}
+
+/* DOWNLOAD — N parallel streams, real bytes via ReadableStream, aggregate throughput */
+async function runDownloadTest(server, parent, onLive) {
+  const cfg = SPEED_TEST_CONFIG;
+  if (parent.aborted) throw mkErr('cancel', 'cancelled');
+
+  let total = 0, finished = false, tEnd = 0, firstErr = null;
+  const xhrs = new Set();
+  const t0 = performance.now();
+  const samples = [{ t: 0, b: 0 }];
+
+  const abortAll = () => {
+    finished = true;
+    xhrs.forEach(x => { try { x.abort(); } catch (_) {} });
+  };
+  const onParentAbort = () => abortAll();
+  parent.addEventListener('abort', onParentAbort, { once: true });
+
+  const finish = () => {
+    if (finished) return;
+    tEnd = performance.now() - t0;
+    samples.push({ t: tEnd, b: total });
+    abortAll();
+  };
+
+  const timer = setInterval(() => {
+    if (finished) return;
+    const t = performance.now() - t0;
+    samples.push({ t, b: total });
+    onLive(liveRate(samples), clamp(t / cfg.downloadDurationMs, 0, 1), total);
+    if (t >= cfg.downloadDurationMs || total >= cfg.downloadMaxBytes) finish();
+    else if (total === 0 && t > cfg.timeoutMs) {
+      firstErr = firstErr || mkErr('timeout', 'No download data received from test server');
+      finish();
+    }
+  }, cfg.sampleIntervalMs);
+
+  const worker = async () => {
+    while (!finished) {
+      try {
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhrs.add(xhr);
+          xhr.open('GET', withNonce(server.downloadEndpoint, 'bytes=' + cfg.downloadChunkBytes), true);
+          xhr.responseType = 'arraybuffer';
+          xhr.timeout = cfg.timeoutMs;
+          xhr.onprogress = e => {
+            if (!finished && e.lengthComputable) {
+              const previous = xhr._lastLoaded || 0;
+              const delta = Math.max(0, e.loaded - previous);
+              xhr._lastLoaded = e.loaded;
+              total += delta;
+            }
+          };
+          xhr.onload = () => {
+            xhrs.delete(xhr);
+            if (finished) { resolve(); return; }
+            if (xhr.status >= 200 && xhr.status < 300) {
+              const received = xhr.response ? xhr.response.byteLength : (xhr._lastLoaded || 0);
+              const missing = Math.max(0, received - (xhr._lastLoaded || 0));
+              total += missing;
+              resolve();
+            } else reject(mkErr('server', 'Download HTTP ' + xhr.status));
+          };
+          xhr.onerror = () => { xhrs.delete(xhr); reject(mkErr('server', 'Download request failed (network, CORS or server)')); };
+          xhr.ontimeout = () => { xhrs.delete(xhr); reject(mkErr('timeout', 'Download request timed out')); };
+          xhr.onabort = () => { xhrs.delete(xhr); resolve(); };
+          try { xhr.send(); } catch (e) { xhrs.delete(xhr); reject(normalizeError(e)); }
+        });
+      } catch (e) {
+        if (finished || parent.aborted) return;
+        firstErr = firstErr || normalizeError(e);
+        return;
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: cfg.downloadStreams }, worker));
+  if (!finished) finish();
+  clearInterval(timer);
+  parent.removeEventListener('abort', onParentAbort);
+  if (parent.aborted) throw mkErr('cancel', 'cancelled');
+
+  const bytes = total;
+  if (bytes <= 0) throw firstErr || mkErr('download', 'No download data received from the test server');
+  return { mbps: finalRate(samples, bytes, tEnd, cfg.warmupMs), bytes, durationMs: tEnd };
+}
+
+/* UPLOAD payload: incompressible bytes (crypto random is payload filler only — never a measurement) */
+function makeUploadBlob(bytes) {
+  const buf = new Uint8Array(bytes);
+  const c = window.crypto && window.crypto.getRandomValues ? window.crypto : null;
+  for (let o = 0; o < bytes; o += 65536) {
+    const part = buf.subarray(o, Math.min(o + 65536, bytes));
+    if (c) c.getRandomValues(part); else for (let i = 0; i < part.length; i++) part[i] = (i * 131 + o) & 255;
+  }
+  return new Blob([buf], { type: 'text/plain' });   // text/plain avoids a CORS pre-flight
+}
+
+/* UPLOAD — M parallel XHR streams; xhr.upload.onprogress gives real bytes handed to the network.
+   (Progress counts bytes accepted by the browser/OS send path, which may run slightly ahead of the
+   server on very short transfers; the warm-up exclusion and multi-second duration limit this.) */
+async function runUploadTest(server, parent, onLive) {
+  const cfg = SPEED_TEST_CONFIG;
+  if (parent.aborted) throw new DOMException('Aborted', 'AbortError');
+  const payload = makeUploadBlob(cfg.uploadChunkBytes);
+  const xhrs = new Set();
+  const cur = new Array(cfg.uploadStreams).fill(0);
+  let done = 0, okReq = 0, finished = false, tEnd = 0, firstErr = null;
+  const getTotal = () => done + cur.reduce((a, b) => a + b, 0);
+  const t0 = performance.now();
+  const samples = [{ t: 0, b: 0 }];
+
+  const relay = () => { finished = true; xhrs.forEach(x => { try { x.abort(); } catch (_) {} }); };
+  parent.addEventListener('abort', relay, { once: true });
+
+  const finish = () => {
+    if (finished) return;
+    tEnd = performance.now() - t0;
+    samples.push({ t: tEnd, b: getTotal() });
+    finished = true;
+    xhrs.forEach(x => { try { x.abort(); } catch (_) {} });
+  };
+
+  const timer = setInterval(() => {
+    if (finished) return;
+    const t = performance.now() - t0, tot = getTotal();
+    samples.push({ t, b: tot });
+    onLive(liveRate(samples), clamp(t / cfg.uploadDurationMs, 0, 1), tot);
+    if (t >= cfg.uploadDurationMs || tot >= cfg.uploadMaxBytes) finish();
+    else if (tot === 0 && t > cfg.timeoutMs) { firstErr = firstErr || mkErr('timeout', 'Upload received no progress'); finish(); }
+  }, cfg.sampleIntervalMs);
+
+  const worker = async i => {
+    while (!finished) {
+      try {
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhrs.add(xhr);
+          xhr.open('POST', withNonce(server.uploadEndpoint));
+          xhr.timeout = cfg.timeoutMs;
+          xhr.upload.onprogress = e => { if (!finished) cur[i] = e.loaded; };
+          xhr.onload = () => {
+            xhrs.delete(xhr);
+            if (xhr.status >= 200 && xhr.status < 300) { okReq++; if (!finished) { done += payload.size; } cur[i] = 0; resolve(); }
+            else reject(mkErr('server', 'Upload HTTP ' + xhr.status));
+          };
+          xhr.onerror = () => { xhrs.delete(xhr); reject(mkErr('server', 'Upload request failed (network, CORS or server)')); };
+          xhr.ontimeout = () => { xhrs.delete(xhr); reject(mkErr('timeout', 'Upload request timed out')); };
+          xhr.onabort = () => { xhrs.delete(xhr); reject(mkErr('abort', 'aborted')); };
+          xhr.send(payload);
+        });
+      } catch (e) {
+        if (finished || parent.aborted) return;
+        firstErr = firstErr || normalizeError(e);
+        return;
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: cfg.uploadStreams }, (_, i) => worker(i)));
+  if (!finished) finish();
+  clearInterval(timer);
+  parent.removeEventListener('abort', relay);
+  if (parent.aborted) throw new DOMException('Aborted', 'AbortError');
+
+  const bytes = samples[samples.length - 1].b;
+  if (okReq === 0 || bytes <= 0) {
+    // Never invent an upload number.
+    return { unavailable: true, reason: firstErr ? firstErr.message : 'Upload endpoint did not accept data', bytes: 0 };
+  }
+  return { mbps: finalRate(samples, bytes, tEnd, cfg.warmupMs), bytes, durationMs: tEnd };
+}
+
+/* Server selection (ready for multiple servers) */
+async function measureServerLatency(server, signal) {
+  try {
+    const eps = [server.pingEndpoint].concat(server.pingFallbackEndpoints || []);
+    for (const u of eps) {
+      try {
+        await pingRequest(u, signal, 3000);                       // warm-up
+        const s = [];
+        for (let i = 0; i < 3; i++) s.push((await pingRequest(u, signal, 3000)).ms);
+        return median(s);
+      } catch (e) { if (signal.aborted) throw e; }
+    }
+  } catch (e) { if (signal.aborted) throw e; }
+  return Infinity;
+}
+async function selectBestServer(servers, signal) {
+  const r = await Promise.all(servers.map(async s => ({ s, ms: await measureServerLatency(s, signal) })));
+  const ok = r.filter(x => isFinite(x.ms)).sort((a, b) => a.ms - b.ms);
+  if (!ok.length) throw mkErr('server', 'No configured test server is reachable');
+  return ok[0].s;
+}
+async function resolveServer(signal) {
+  if (selectedServerId !== 'auto') {
+    const s = SERVER_REGISTRY.find(x => x.id === selectedServerId);
+    if (s) return s;
+  }
+  if (SERVER_REGISTRY.length === 1) return SERVER_REGISTRY[0];
+  return selectBestServer(SERVER_REGISTRY, signal);
+}
+
+/* Browser network information (supporting info only — NEVER the measured speed) */
+function getNetworkInformation() {
+  const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (!c) return { supported: false, label: 'Unknown', detail: 'Network details unavailable in this browser.' };
+  const names = { wifi: 'Wi-Fi', cellular: 'Cellular', ethernet: 'Ethernet', bluetooth: 'Bluetooth', wimax: 'WiMAX', mixed: 'Mixed' };
+  const label = names[c.type] || 'Unknown';
+  const parts = [];
+  if (c.effectiveType) parts.push('Browser class: ' + safeStr(c.effectiveType, 8));
+  if (typeof c.downlink === 'number' && c.downlink > 0) parts.push('est. ' + c.downlink + ' Mbps');
+  if (typeof c.rtt === 'number' && c.rtt > 0) parts.push('est. RTT ' + c.rtt + ' ms');
+  if (c.saveData) parts.push('Data Saver on');
+  return {
+    supported: true, label, type: c.type || null, effectiveType: c.effectiveType || null,
+    detail: parts.length ? 'Browser estimate — ' + parts.join(' · ') : 'Network details unavailable in this browser.'
+  };
+}
+
+/* ---------------------------------------------------------------------
+   4. ANIMATION ENGINE  (display only — never alters measured values)
+   --------------------------------------------------------------------- */
+const SCALES = [10, 25, 50, 100, 250, 500, 1000, 2500];
+const GC = { cx: 160, cy: 122, R: 110, a0: -120, a1: 120 };
+const gauge = { target: 0, displayed: 0, scaleTarget: 10, scaleCur: 10, shrink: true, raf: 0, last: 0, labelScale: -1 };
+
+function polar(r, deg) { const a = deg * Math.PI / 180; return [GC.cx + r * Math.sin(a), GC.cy - r * Math.cos(a)]; }
+function scaleFor(v) { for (const s of SCALES) if (v <= s * 0.85) return s; return SCALES[SCALES.length - 1]; }
+
+function buildGauge() {
+  const [x0, y0] = polar(GC.R, GC.a0), [x1, y1] = polar(GC.R, GC.a1);
+  const d = `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${GC.R} ${GC.R} 0 1 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  $('#gTrack').setAttribute('d', d);
+  $('#gArc').setAttribute('d', d);
+  const ticks = $('#gTicks'), labels = $('#gLabels');
+  const NS = 'http://www.w3.org/2000/svg';
+  for (let i = 0; i <= 25; i++) {
+    const ang = GC.a0 + (GC.a1 - GC.a0) * (i / 25), major = i % 5 === 0;
+    const [ax, ay] = polar(GC.R - 13, ang), [bx, by] = polar(GC.R - (major ? 25 : 19), ang);
+    const ln = document.createElementNS(NS, 'line');
+    ln.setAttribute('x1', ax); ln.setAttribute('y1', ay); ln.setAttribute('x2', bx); ln.setAttribute('y2', by);
+    ln.setAttribute('class', 'g-tick' + (major ? ' major' : ''));
+    ticks.appendChild(ln);
+  }
+  for (let i = 0; i <= 5; i++) {
+    const [lx, ly] = polar(GC.R - 40, GC.a0 + (GC.a1 - GC.a0) * (i / 5));
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', lx); t.setAttribute('y', ly); t.setAttribute('class', 'g-label'); t.dataset.i = i;
+    labels.appendChild(t);
+  }
+}
+function renderGauge() {
+  const frac = clamp(gauge.displayed / gauge.scaleCur, 0, 1);
+  const deg = GC.a0 + (GC.a1 - GC.a0) * frac;
+  $('#gNeedle').setAttribute('transform', `rotate(${deg.toFixed(2)} ${GC.cx} ${GC.cy})`);
+  const arc = $('#gArc');
+  arc.style.strokeDasharray = (frac * 100).toFixed(3) + ' 100';
+  arc.style.opacity = frac < 0.004 ? '0' : '1';
+  $('#gNum').textContent = fmtSpeed(gauge.displayed);
+  const sc = Math.round(gauge.scaleCur * 100);
+  if (sc !== gauge.labelScale) {
+    gauge.labelScale = sc;
+    $$('#gLabels text').forEach(t => {
+      const v = gauge.scaleCur * (+t.dataset.i / 5);
+      t.textContent = v >= 10 ? Math.round(v) : v.toFixed(1).replace(/\.0$/, '');
+    });
+  }
+}
+function gaugeFrame(now) {
+  const dt = clamp((now - gauge.last) / 1000 || 0.016, 0.001, 0.1);
+  gauge.last = now;
+  const tau = !settings.animation ? 0 : (mqReduce.matches ? 0.1 : 0.45);
+  const k = tau === 0 ? 1 : 1 - Math.exp(-dt / tau);
+  gauge.displayed += (gauge.target - gauge.displayed) * k;
+  if (Math.abs(gauge.target - gauge.displayed) < 0.005) gauge.displayed = gauge.target;
+
+  const need = scaleFor(Math.max(gauge.target, gauge.displayed));
+  if (need > gauge.scaleTarget) gauge.scaleTarget = need;
+  else if (gauge.shrink && need < gauge.scaleTarget) gauge.scaleTarget = need;
+  const ks = tau === 0 ? 1 : 1 - Math.exp(-dt / (tau * 0.9));
+  gauge.scaleCur += (gauge.scaleTarget - gauge.scaleCur) * ks;
+  if (Math.abs(gauge.scaleTarget - gauge.scaleCur) < 0.02) gauge.scaleCur = gauge.scaleTarget;
+
+  renderGauge();
+  const settled = gauge.displayed === gauge.target && gauge.scaleCur === gauge.scaleTarget;
+  gauge.raf = settled ? 0 : requestAnimationFrame(gaugeFrame);
+}
+function startGaugeLoop() {
+  if (!gauge.raf) { gauge.last = performance.now(); gauge.raf = requestAnimationFrame(gaugeFrame); }
+}
+function updateSpeedometer(mbps) { gauge.target = Math.max(0, +mbps || 0); startGaugeLoop(); }
+function resetGaugeHard() {
+  if (gauge.raf) cancelAnimationFrame(gauge.raf);
+  gauge.raf = 0; gauge.target = 0; gauge.displayed = 0; gauge.scaleTarget = 10; gauge.scaleCur = 10; gauge.shrink = true;
+  renderGauge();
+}
+
+/* ---------------------------------------------------------------------
+   5. UI
+   --------------------------------------------------------------------- */
+const METRICS = [
+  { key: 'dl', icon: '↓', label: 'DOWNLOAD', unit: 'Mbps' },
+  { key: 'ul', icon: '↑', label: 'UPLOAD', unit: 'Mbps' },
+  { key: 'ping', icon: '◉', label: 'PING', unit: 'ms' },
+  { key: 'jitter', icon: '≈', label: 'JITTER', unit: 'ms' }
+];
+function buildMetrics() {
+  $$('[data-metrics]').forEach(host => {
+    host.textContent = '';
+    METRICS.forEach(m => {
+      const card = el('div', 'metric'); card.dataset.m = m.key;
+      const lab = el('div', 'm-label'); lab.append(el('i', '', m.icon), document.createTextNode(m.label));
+      const val = el('div', 'm-val'); val.append(el('span', 'v', '—'), el('span', 'u', m.unit));
+      card.append(lab, val); host.append(card);
+    });
+  });
+}
+function setMetric(key, text, unavailable) {
+  $$(`[data-m="${key}"]`).forEach(c => {
+    const v = $('.v', c), u = $('.u', c);
+    v.textContent = text; v.classList.toggle('small', !!unavailable); u.hidden = !!unavailable;
+  });
+}
+function setActiveMetrics(keys) {
+  $$('[data-m]').forEach(c => c.classList.toggle('active', !!keys && keys.includes(c.dataset.m)));
+}
+function renderMetricsFromState() {
+  const m = state.m;
+  setMetric('dl', m.dl == null ? '—' : fmtSpeed(m.dl));
+  setMetric('ul', m.ulUnavailable ? 'Unavailable' : (m.ul == null ? '—' : fmtSpeed(m.ul)), m.ulUnavailable);
+  setMetric('ping', m.ping == null ? '—' : String(Math.round(m.ping)));
+  setMetric('jitter', m.jitter == null ? '—' : m.jitter.toFixed(1));
+}
+
+let toastTimer = 0;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function setGoMessage(msg, isErr) {
+  const g = $('#goMsg'); g.textContent = msg || 'Press GO to begin the test.'; g.classList.toggle('err', !!isErr);
+}
+
+/* Views */
+const VIEWS = ['home', 'test', 'result', 'history', 'error'];
+function showView(name, focus = true) {
+  if (state.view !== name) state.prevView = state.view;
+  state.view = name; document.body.dataset.view = name;
+  VIEWS.forEach(v => {
+    const s = $('#view-' + v), on = v === name;
+    s.hidden = !on;
+    if (on && settings.animation) { s.classList.remove('enter'); void s.offsetWidth; s.classList.add('enter'); }
+  });
+  if (name === 'home') $('#slotHome').appendChild($('#gauge'));
+  if (name === 'test') $('#slotTest').appendChild($('#gauge'));
+  $('#btnResults').setAttribute('aria-pressed', String(name === 'history'));
+  window.scrollTo(0, 0);
+  if (focus) { const h = $(`#view-${name} [data-focus]`); if (h) h.focus({ preventScroll: true }); }
+}
+
+function setTestPhase(p) {
+  state.phase = p;
+  $('#phaseLabel').textContent = PHASE_LABEL[p] || p;
+  $('#srStatus').textContent = PHASE_LABEL[p] || p;
+  setActiveMetrics(PHASE_METRIC[p]);
+}
+function updateProgress(pct) {
+  state.progress = Math.max(state.progress, clamp(pct, 0, 100));
+  $('#barFill').style.width = state.progress.toFixed(1) + '%';
+  $('#barWrap').setAttribute('aria-valuenow', String(Math.round(state.progress)));
+}
+function updateDataTested() { $('#dataTested').textContent = fmtMB(state.m.bytesDown + state.m.bytesUp); }
+
+function serverDisplay() {
+  const s = state.server || SERVER_REGISTRY.find(x => x.id === selectedServerId) || SERVER_REGISTRY[0];
+  return s.name + (state.colo ? ' (' + state.colo + ')' : '');
+}
+function updateServerText() {
+  const auto = selectedServerId === 'auto' || !SERVER_REGISTRY.some(x => x.id === selectedServerId);
+  const sel = SERVER_REGISTRY.find(x => x.id === selectedServerId) || SERVER_REGISTRY[0];
+  $$('[data-server-name]').forEach(n => n.textContent = auto ? 'Automatic Edge' : sel.name);
+  $$('[data-server-sub]').forEach(n => n.textContent = auto ? (SERVER_REGISTRY.length === 1 ? sel.name : 'Lowest latency of ' + SERVER_REGISTRY.length + ' servers') : sel.region);
+  $$('[data-server-full]').forEach(n => n.textContent = serverDisplay());
+}
+function updateConnectionStatus() {
+  const online = navigator.onLine;
+  $$('[data-online]').forEach(p => { p.textContent = online ? 'ONLINE' : 'OFFLINE'; p.classList.toggle('off', !online); });
+  const info = getNetworkInformation();
+  $$('[data-conn]').forEach(n => n.textContent = info.label);
+  $$('[data-conn-detail]').forEach(n => n.textContent = info.detail);
+  $$('[data-streams]').forEach(n => n.textContent = SPEED_TEST_CONFIG.downloadStreams + '↓ / ' + SPEED_TEST_CONFIG.uploadStreams + '↑ streams');
+}
+
+/* Settings */
+function loadSettings() {
+  const d = { theme: 'dark', autoStart: false, sound: false, animation: true };
+  try { const s = JSON.parse(localStorage.getItem(STORE_SETTINGS) || '{}'); return Object.assign(d, { theme: s.theme === 'light' ? 'light' : 'dark', autoStart: !!s.autoStart, sound: !!s.sound, animation: s.animation !== false }); }
+  catch (_) { return d; }
+}
+function saveSettings() { try { localStorage.setItem(STORE_SETTINGS, JSON.stringify(settings)); } catch (_) {} }
+function applySettings() {
+  document.documentElement.dataset.theme = settings.theme;
+  $('#metaTheme').setAttribute('content', settings.theme === 'light' ? '#f1f5fb' : '#060a13');
+  document.body.classList.toggle('no-anim', !settings.animation);
+  document.body.classList.toggle('reduced-glow', mqReduce.matches || !settings.animation);
+}
+function openSettings() {
+  $('#setLight').checked = settings.theme === 'light';
+  $('#setAuto').checked = settings.autoStart;
+  $('#setSound').checked = settings.sound;
+  $('#setAnim').checked = settings.animation;
+  const c = SPEED_TEST_CONFIG;
+  $('#setData').textContent = 'Data per test: typically a few tens of MB; capped at ' + fmtMB(c.downloadMaxBytes) + ' down + ' + fmtMB(c.uploadMaxBytes) + ' up.';
+  const d = $('#dlgSettings'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+function closeSettings() { const d = $('#dlgSettings'); if (d.close) d.close(); else d.removeAttribute('open'); }
+
+/* Server dialog */
+function openServerDialog() {
+  const host = $('#srvList'); host.textContent = '';
+  const opts = [];
+  if (SERVER_REGISTRY.length > 1) opts.push({ id: 'auto', name: 'Automatic', sub: 'Pick the lowest measured latency' });
+  SERVER_REGISTRY.forEach(s => opts.push({ id: s.id, name: s.name, sub: s.region }));
+  const cur = (selectedServerId === 'auto' && SERVER_REGISTRY.length === 1) ? SERVER_REGISTRY[0].id : selectedServerId;
+  opts.forEach(o => {
+    const lab = el('label', 'srv'); const r = document.createElement('input');
+    r.type = 'radio'; r.name = 'srv'; r.value = o.id; r.checked = o.id === cur;
+    r.addEventListener('change', () => {
+      selectedServerId = (SERVER_REGISTRY.length === 1) ? 'auto' : o.id;
+      try { localStorage.setItem(STORE_SERVER, selectedServerId); } catch (_) {}
+      state.server = null; state.colo = null; updateServerText(); toast('Test server: ' + o.name);
+    });
+    const t = el('div'); t.append(el('b', '', o.name), el('small', '', o.sub));
+    lab.append(r, t); host.append(lab);
+  });
+  const d = $('#dlgServer'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+
+/* History */
+function loadHistory() {
+  try {
+    const a = JSON.parse(localStorage.getItem(STORE_HISTORY) || '[]');
+    return (Array.isArray(a) ? a : []).filter(r => r && isFinite(r.ts) && isFinite(r.dl) && isFinite(r.ping) && isFinite(r.jitter)).slice(0, SPEED_TEST_CONFIG.historyLimit);
+  } catch (_) { return []; }
+}
+function writeHistory(a) { try { localStorage.setItem(STORE_HISTORY, JSON.stringify(a.slice(0, SPEED_TEST_CONFIG.historyLimit))); } catch (_) {} }
+function saveResult(r) { const h = loadHistory(); h.unshift(r); writeHistory(h); }
+function clearHistory() { try { localStorage.removeItem(STORE_HISTORY); } catch (_) {} renderHistory(); toast('History cleared'); }
+function renderHistory() {
+  const list = $('#historyList'); list.textContent = '';
+  const h = loadHistory();
+  $('#historyEmpty').hidden = h.length > 0;
+  $('#btnClearHistory').disabled = !h.length;
+  h.forEach(r => {
+    const li = el('li', 'h-item');
+    const vals = el('div', 'h-vals');
+    vals.append(el('span', '', '↓ ' + fmtSpeed(r.dl) + ' Mbps'),
+      el('span', '', '↑ ' + (r.ul == null ? 'n/a' : fmtSpeed(r.ul) + ' Mbps')),
+      el('span', '', '◉ ' + Math.round(r.ping) + ' ms'),
+      el('span', '', '≈ ' + r.jitter.toFixed(1) + ' ms'));
+    li.append(el('div', 'h-date', fmtDate(r.ts) + ' · ' + fmtTime(r.ts)), vals,
+      el('div', 'h-meta', safeStr(r.conn) + ' · ' + safeStr(r.server) + (r.rating ? ' · rated ' + (r.rating | 0) + '/5' : '')));
+    list.append(li);
+  });
+}
+
+/* Result */
+function interpret(r) {
+  let t;
+  if (r.dl < 5) t = 'Lower measured throughput; experience may vary with Wi-Fi/mobile signal and congestion. Basic browsing and messaging are usually fine, while video may buffer.';
+  else if (r.dl < 25) t = 'Suitable for everyday web browsing and many standard-definition or HD streaming uses.';
+  else if (r.dl < 100) t = 'Suitable for many HD streaming uses, video calls and typical multi-device use.';
+  else if (r.dl < 300) t = 'Strong measured throughput for downloads, high-quality streaming and video calls.';
+  else t = 'Very high measured throughput; your device, Wi-Fi or the test route may now be the limiting factor.';
+  if (r.ping > 100 || r.jitter > 30) t += ' Higher latency or jitter was observed, which can affect gaming and calls.';
+  return t;
+}
+function renderResult(r) {
+  $('#rDl').textContent = fmtSpeed(r.dl);
+  $('#rUl').textContent = r.ul == null ? 'Unavailable' : fmtSpeed(r.ul);
+  $('#rUl').classList.toggle('small', r.ul == null);
+  $('#rUlU').hidden = r.ul == null;
+  $('#rPing').textContent = String(Math.round(r.ping));
+  $('#rJit').textContent = r.jitter.toFixed(1);
+  $('#rConn').textContent = safeStr(r.conn);
+  $('#rConnSub').textContent = r.ul == null ? 'Upload measurement unavailable on this server.' : 'Multi-stream test';
+  $('#rServer').textContent = safeStr(r.server);
+  $('#rData').textContent = r.dataMB.toFixed(1) + ' MB';
+  $('#rTime').textContent = fmtDate(r.ts) + ', ' + fmtTime(r.ts);
+  $('#rInterp').textContent = interpret(r);
+  $('#rId').textContent = 'Local test ID: ' + r.id + ' (kept only on this device)';
+  $$('.rate').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.rate === r.rating)));
+}
+function resultText(r) {
+  return 'SpeedGauge Internet Speed Test\n\nDownload: ' + fmtSpeed(r.dl) + ' Mbps\nUpload: ' +
+    (r.ul == null ? 'unavailable' : fmtSpeed(r.ul) + ' Mbps') + '\nPing: ' + Math.round(r.ping) +
+    ' ms\nJitter: ' + r.jitter.toFixed(1) + ' ms\nTested: ' + fmtDate(r.ts) + ', ' + fmtTime(r.ts);
+}
+async function shareResult(r) {
+  r = r || state.lastResult || loadHistory()[0];
+  if (!r) { toast('Run a test first, then share your result.'); return; }
+  const text = resultText(r);
+  if (navigator.share) {
+    try { await navigator.share({ title: 'SpeedGauge result', text }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(text); toast('Result copied to clipboard'); return; } catch (_) {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove();
+    toast(ok ? 'Result copied to clipboard' : 'Could not copy — please copy manually');
+  } catch (_) { toast('Could not copy — please copy manually'); }
+}
+
+/* Sound (off by default; only plays after a user-started test) */
+let audioCtx = null;
+function unlockAudio() {
+  if (!settings.sound) return;
+  try { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; audioCtx = audioCtx || new AC(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (_) {}
+}
+function playChime() {
+  if (!settings.sound || !audioCtx) return;
+  try {
+    const t = audioCtx.currentTime, o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(660, t); o.frequency.setValueAtTime(880, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.42);
+  } catch (_) {}
+}
+
+/* Error UI */
+const ERRORS = {
+  offline: ['No Internet connection', 'Your device is offline or the connection dropped during the test.', ['Check Wi-Fi or mobile data', 'Move to an area with better signal']],
+  timeout: ['The test server did not respond in time', 'The measurement timed out before enough data was transferred.', ['Slow or interrupted network', 'Test server temporarily busy']],
+  server: ['Test server unavailable', 'We couldn’t reach the test server, or the browser blocked the request.', ['Test server unavailable or rate-limited', 'Browser, VPN, firewall or content-blocker restriction (CORS)', 'Network interruption']],
+  ping: ['Ping measurement failed', 'Too few latency samples succeeded to produce a reliable result.', ['Unstable connection', 'Test server unavailable']],
+  download: ['Download measurement failed', 'No download data was received from the test server.', ['Network interruption', 'Test server unavailable or blocked']]
+};
+function showError(e) {
+  const code = ERRORS[e.code] ? e.code : 'server';
+  const [title, msg, causes] = ERRORS[code];
+  $('#errTitle').textContent = 'TEST UNAVAILABLE';
+  $('#errMsg').textContent = title + '. ' + msg;
+  const ul = $('#errCauses'); ul.textContent = '';
+  ['Possible causes:'].concat(causes).forEach((c, i) => { const li = el('li', '', c); if (i === 0) li.style.listStyle = 'none', li.style.marginLeft = '-20px'; ul.append(li); });
+  $('#errDetail').textContent = 'Details: ' + safeStr(e.message, 120) + ' (' + code + ')';
+  showView('error');
+}
+
+/* ---------------------------------------------------------------------
+   6. TEST ORCHESTRATION
+   --------------------------------------------------------------------- */
+function resetTest() {
+  state.m = { dl: null, ul: null, ping: null, jitter: null, ulUnavailable: false, bytesDown: 0, bytesUp: 0 };
+  state.progress = 0; state.colo = null; state.server = null;
+  resetGaugeHard();
+  renderMetricsFromState();
+  setActiveMetrics(null);
+  $('#barFill').style.width = '0%'; $('#barWrap').setAttribute('aria-valuenow', '0');
+  $('#dataTested').textContent = '0.0 MB';
+  state.phase = 'ready'; $('#phaseLabel').textContent = PHASE_LABEL.ready;
+  updateServerText();
+}
+function cancelTest() {
+  if (!state.running) return;
+  state.runId++; state.running = false;
+  if (state.abort) state.abort.abort();
+  resetTest(); showView('home');
+  setGoMessage('Test cancelled. Press GO to begin the test.');
+  toast('Test cancelled');
+}
+
+async function startTest() {
+  if (state.running) return;
+  if (!navigator.onLine) { setGoMessage('No Internet connection', true); updateConnectionStatus(); return; }
+  unlockAudio();
+  setGoMessage('');
+  const runId = ++state.runId;
+  const check = () => { if (state.runId !== runId) throw mkErr('cancel', 'cancelled'); };
+  resetTest();
+  state.running = true; state.offlineHit = false;
+  state.abort = new AbortController();
+  const signal = state.abort.signal;
+  const cfg = SPEED_TEST_CONFIG;
+  showView('test');
+
+  try {
+    /* --- connection check --- */
+    setTestPhase('checking'); updateProgress(2); updateConnectionStatus();
+    await sleep(300); check();
+    const server = await resolveServer(signal); check();
+    state.server = server; updateServerText();
+
+    /* --- ping + jitter (real samples, median) --- */
+    setTestPhase('ping');
+    const p = await runPingTest(server, signal, samples => {
+      state.m.ping = calculatePing(samples); state.m.jitter = calculateJitter(samples, state.m.ping);
+      setMetric('ping', String(Math.round(state.m.ping))); setMetric('jitter', state.m.jitter.toFixed(1));
+      updateProgress(3 + (samples.length / cfg.pingSamples) * 11);
+    });
+    check();
+    state.m.ping = p.ping; state.m.jitter = p.jitter; state.colo = p.colo; updateServerText();
+    renderMetricsFromState(); updateProgress(15);
+
+    /* --- download --- */
+    setTestPhase('download'); gauge.shrink = false;
+    const d = await runDownloadTest(server, signal, (rate, frac, bytes) => {
+      if (state.runId !== runId) return;
+      state.m.bytesDown = bytes; updateDataTested();
+      updateSpeedometer(rate); setMetric('dl', fmtSpeed(rate));
+      updateProgress(15 + frac * 40);
+    });
+    check();
+    state.m.dl = d.mbps; state.m.bytesDown = d.bytes; updateDataTested();
+    setMetric('dl', fmtSpeed(d.mbps)); updateSpeedometer(d.mbps); updateProgress(55);
+    await sleep(500); check();
+
+    /* needle returns smoothly to zero before the upload phase */
+    gauge.shrink = true; updateSpeedometer(0);
+    await sleep(settings.animation ? 800 : 200); check();
+
+    /* --- upload --- */
+    setTestPhase('upload'); gauge.shrink = false;
+    const u = await runUploadTest(server, signal, (rate, frac, bytes) => {
+      if (state.runId !== runId) return;
+      state.m.bytesUp = bytes; updateDataTested();
+      updateSpeedometer(rate); setMetric('ul', fmtSpeed(rate));
+      updateProgress(58 + frac * 36);
+    });
+    check();
+    if (u.unavailable) {
+      state.m.ul = null; state.m.ulUnavailable = true; state.m.bytesUp = 0;
+      setMetric('ul', 'Unavailable', true); toast('Upload measurement unavailable');
+    } else {
+      state.m.ul = u.mbps; state.m.bytesUp = u.bytes; setMetric('ul', fmtSpeed(u.mbps));
+      updateSpeedometer(u.mbps);
+    }
+    updateDataTested(); updateProgress(95);
+
+    /* --- calculate / stabilize --- */
+    setTestPhase('calculating'); await sleep(450); check();
+    const result = calculateResults(server);
+    setTestPhase('stabilizing'); gauge.shrink = true; updateSpeedometer(result.dl);
+    updateProgress(98); await sleep(settings.animation ? 700 : 150); check();
+
+    setTestPhase('complete'); updateProgress(100); setActiveMetrics(null);
+    state.lastResult = result; saveResult(result); playChime();
+    await sleep(450); check();
+    renderResult(result); showView('result');
+  } catch (e) {
+    if (state.runId !== runId || (e && e.code === 'cancel')) return;     // cancelled — UI already reset
+    if (state.offlineHit || !navigator.onLine) e = mkErr('offline', 'Connection lost during the test');
+    else if (!e.code) e = (e && e.name === 'AbortError') ? mkErr('timeout', 'Request aborted') : normalizeError(e);
+    setTestPhase('ready'); resetGaugeHard();
+    showError(e);
+  } finally {
+    if (state.runId === runId) { state.running = false; state.abort = null; }
+  }
+}
+
+function calculateResults(server) {
+  const m = state.m, info = getNetworkInformation(), ts = Date.now();
+  return {
+    id: 'local-' + ts.toString(36),
+    ts,
+    dl: m.dl, ul: m.ulUnavailable ? null : m.ul, ping: m.ping, jitter: m.jitter,
+    conn: info.label,
+    server: serverDisplay(),
+    dataMB: (m.bytesDown + m.bytesUp) / 1e6,
+    rating: null
+  };
+}
+
+/* ---------------------------------------------------------------------
+   EVENTS & INIT
+   --------------------------------------------------------------------- */
+function goHome() { if (state.running) { toast('Cancel the running test first'); return; } showView('home'); }
+
+function init() {
+  buildGauge(); buildMetrics(); applySettings(); resetGaugeHard();
+  updateConnectionStatus(); updateServerText(); renderMetricsFromState();
+
+  $('#btnGo').addEventListener('click', startTest);
+  $('#btnCancel').addEventListener('click', cancelTest);
+  $('#btnAgain').addEventListener('click', startTest);
+  $('#btnRetry').addEventListener('click', startTest);
+  $('#btnErrHome').addEventListener('click', () => { resetTest(); setGoMessage(''); showView('home'); });
+  $('#brandBtn').addEventListener('click', goHome);
+  $('#btnShare').addEventListener('click', () => shareResult());
+  $('#btnShareRes').addEventListener('click', () => shareResult(state.lastResult));
+  $('#btnSettings').addEventListener('click', openSettings);
+  $('#btnChangeServer').addEventListener('click', openServerDialog);
+  $('#btnResults').addEventListener('click', () => {
+    if (state.running) { toast('Cancel the running test first'); return; }
+    if (state.view === 'history') { showView(state.prevView === 'history' ? 'home' : state.prevView === 'error' || state.prevView === 'test' ? 'home' : state.prevView); return; }
+    renderHistory(); showView('history');
+  });
+  $('#btnToHistory').addEventListener('click', () => { renderHistory(); showView('history'); });
+  $('#btnHistGo').addEventListener('click', () => { showView('home', false); startTest(); });
+  $('#btnClearHistory').addEventListener('click', clearHistory);
+  $('#setClear').addEventListener('click', () => { clearHistory(); });
+
+  $$('.rate').forEach(b => b.addEventListener('click', () => {
+    const r = state.lastResult; if (!r) return;
+    r.rating = (r.rating === +b.dataset.rate) ? null : +b.dataset.rate;
+    $$('.rate').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.rate === r.rating)));
+    const h = loadHistory(); const i = h.findIndex(x => x.id === r.id); if (i > -1) { h[i].rating = r.rating; writeHistory(h); }
+  }));
+
+  /* settings controls */
+  $('#setLight').addEventListener('change', e => { settings.theme = e.target.checked ? 'light' : 'dark'; saveSettings(); applySettings(); });
+  $('#setAuto').addEventListener('change', e => { settings.autoStart = e.target.checked; saveSettings(); });
+  $('#setSound').addEventListener('change', e => { settings.sound = e.target.checked; saveSettings(); if (settings.sound) { unlockAudio(); } });
+  $('#setAnim').addEventListener('change', e => { settings.animation = e.target.checked; saveSettings(); applySettings(); });
+
+  /* close dialogs on backdrop click */
+  ['#dlgSettings', '#dlgServer'].forEach(s => { const d = $(s); d.addEventListener('click', e => { if (e.target === d) d.close(); }); });
+
+  /* connectivity */
+  window.addEventListener('online', () => { updateConnectionStatus(); setGoMessage(''); });
+  window.addEventListener('offline', () => {
+    updateConnectionStatus();
+    if (state.running) { state.offlineHit = true; if (state.abort) state.abort.abort(); }
+    else setGoMessage('No Internet connection', true);
+  });
+  const c = navigator.connection; if (c && c.addEventListener) c.addEventListener('change', updateConnectionStatus);
+  if (mqReduce.addEventListener) mqReduce.addEventListener('change', applySettings);
+
+  showView('home', false);
+  if (!navigator.onLine) setGoMessage('No Internet connection', true);
+  if (settings.autoStart && navigator.onLine) startTest();       // only when the user enabled it
+}
+init();
+</script>
+</body>
+</html>
